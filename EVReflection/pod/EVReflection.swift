@@ -882,19 +882,20 @@ final public class EVReflection {
                         }
                         
                         value = propertyGetter()
-                        
-                        let (unboxedValue2, _, _) = valueForAny(theObject, key: originalKey, anyValue: value)
-                        unboxedValue = unboxedValue2
+                        (unboxedValue, _, isObject) = valueForAny(theObject, key: originalKey, anyValue: value)
                     }
                     
                     if isObject {
                         // sub objects will be added as a dictionary itself.
                         let (dict, _) = toDictionary(unboxedValue as! NSObject, performKeyCleanup: performKeyCleanup)
                         propertiesDictionary.setValue(dict, forKey: mapKey)
+                        
                     } else if let array = unboxedValue as? [NSObject] {
-                        if unboxedValue as? [String] != nil || unboxedValue as? [NSString] != nil || unboxedValue as? [NSDate] != nil || unboxedValue as? [NSNumber] != nil || unboxedValue as? [NSArray] != nil || unboxedValue as? [NSDictionary] != nil {
-                            // Arrays of standard types will just be set
+                        
+                        if isUnboxedValueAKnownArray(unboxedValue) {
+                            // Arrays of known types will just be set
                             propertiesDictionary.setValue(unboxedValue, forKey: mapKey)
+                            
                         } else {
                             // Get the type of the items in the array
                             let item: NSObject
@@ -926,6 +927,20 @@ final public class EVReflection {
             }
         }
         return (propertiesDictionary, propertiesTypeDictionary)
+    }
+    
+    private class func isUnboxedValueAKnownArray(unboxedValue: AnyObject) -> Bool {
+        
+        if unboxedValue as? [String] != nil ||
+           unboxedValue as? [NSString] != nil ||
+           unboxedValue as? [NSDate] != nil ||
+           unboxedValue as? [NSNumber] != nil ||
+           unboxedValue as? [NSArray] != nil ||
+           unboxedValue as? [NSDictionary] != nil {
+            return true
+        }
+        
+        return false
     }
     
     
